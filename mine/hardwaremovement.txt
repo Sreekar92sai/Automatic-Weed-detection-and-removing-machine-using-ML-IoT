@@ -1,0 +1,143 @@
+Project: Automatic weed cutting robot with object detection using Raspberry Pi
+
+Components:
+
+Raspberry Pi 4 Model B 4GB
+Camera module
+Ultrasonic sensor
+L298N motor driver module
+12V 30RPM DC motor
+4 x wheels
+1 x blade
+12V battery (minimum 8000mAh, recommended 10000mAh or higher)
+Breadboard (optional)
+Jumper wires
+Strategy:
+
+Connect the ultrasonic sensor to the Raspberry Pi GPIO pins to detect objects and obstacles in front of the robot.
+Develop a weed detection algorithm using OpenCV and Python, and deploy it on the Raspberry Pi using Flask to run the detection algorithm in real-time using the camera module.
+Connect the L298N motor driver module to the Raspberry Pi to control the motors and blade.
+Connect the motors to the L298N module to control the movement and rotation of the robot.
+Connect the blade to the L298N module to cut the weeds.
+Connect the battery to power the Raspberry Pi, motors, and blade.
+Assemble the robot with the wheels and test its movements.
+Integrate the object detection algorithm with the motor control to make the robot stop when it detects an object or obstacle.
+Test the complete robot in a real-world environment and adjust as necessary.
+
+connections :
+
+Connect the ground (GND) pin of the ultrasonic sensor to any GND pin on the Raspberry Pi.
+Connect the Echo pin of the ultrasonic sensor to GPIO pin 18 on the Raspberry Pi.
+Connect the Trigger pin of the ultrasonic sensor to GPIO pin 17 on the Raspberry Pi.
+Connect the left motor to the left side of the L298N motor driver module (IN1 and IN2).
+Connect the right motor to the right side of the L298N motor driver module (IN3 and IN4).
+Connect the GND pin of the L298N motor driver module to any GND pin on the Raspberry Pi.
+Connect the VCC pin of the L298N motor driver module to the 5V pin on the Raspberry Pi.
+Connect the Signal pin of the servo motor to GPIO pin 14 on the Raspberry Pi.
+Connect the GND pin of the servo motor to any GND pin on the Raspberry Pi.
+Connect the red wire of the camera module to the 5V pin on the Raspberry Pi.
+Connect the black wire of the camera module to any GND pin on the Raspberry Pi.
+Connect the green wire of the camera module to GPIO pin 2 on the Raspberry Pi.
+Connect the white wire of the camera module to GPIO pin 3 on the Raspberry Pi.
+Connect the positive (red) wire of the 12V battery to the VIN pin on the L298N motor driver module.
+Connect the ground (black) wire of the 12V battery to the GND pin on the L298N motor driver module.
+Connect the blade motor to the OUT1 and OUT2 pins on the L298N motor driver module.
+Connect the wheels to the left and right motors.
+
+code :
+
+import RPi.GPIO as GPIO
+import time
+
+# Motor Driver Connections
+in1 = 16
+in2 = 18
+enA = 22
+enB = 23
+
+# Ultrasonic Sensor Connections
+trig = 13
+echo = 15
+
+# Servo Motor Connection
+servo = 11
+
+# Set GPIO mode
+GPIO.setmode(GPIO.BOARD)
+
+# Motor Driver Setup
+GPIO.setup(in1,GPIO.OUT)
+GPIO.setup(in2,GPIO.OUT)
+GPIO.setup(enA,GPIO.OUT)
+GPIO.setup(enB,GPIO.OUT)
+GPIO.output(in1,GPIO.LOW)
+GPIO.output(in2,GPIO.LOW)
+motorA = GPIO.PWM(enA,1000)
+motorB = GPIO.PWM(enB,1000)
+motorA.start(0)
+motorB.start(0)
+
+# Ultrasonic Sensor Setup
+GPIO.setup(trig,GPIO.OUT)
+GPIO.setup(echo,GPIO.IN)
+
+# Servo Motor Setup
+GPIO.setup(servo,GPIO.OUT)
+servoPWM = GPIO.PWM(servo,50)
+servoPWM.start(7.5)
+
+# Function to move robot forward
+def moveForward(speed):
+    GPIO.output(in1,GPIO.HIGH)
+    GPIO.output(in2,GPIO.LOW)
+    motorA.ChangeDutyCycle(speed)
+    motorB.ChangeDutyCycle(speed)
+
+# Function to move robot backward
+def moveBackward(speed):
+    GPIO.output(in1,GPIO.LOW)
+    GPIO.output(in2,GPIO.HIGH)
+    motorA.ChangeDutyCycle(speed)
+    motorB.ChangeDutyCycle(speed)
+
+# Function to turn robot left
+def turnLeft():
+    servoPWM.ChangeDutyCycle(10)
+    time.sleep(0.5)
+    servoPWM.ChangeDutyCycle(7.5)
+
+# Function to turn robot right
+def turnRight():
+    servoPWM.ChangeDutyCycle(5)
+    time.sleep(0.5)
+    servoPWM.ChangeDutyCycle(7.5)
+
+# Function to stop robot
+def stop():
+    GPIO.output(in1,GPIO.LOW)
+    GPIO.output(in2,GPIO.LOW)
+    motorA.ChangeDutyCycle(0)
+    motorB.ChangeDutyCycle(0)
+
+# Function to measure distance using ultrasonic sensor
+def measureDistance():
+    GPIO.output(trig,GPIO.LOW)
+    time.sleep(0.1)
+    GPIO.output(trig,GPIO.HIGH)
+    time.sleep(0.00001)
+    GPIO.output(trig,GPIO.LOW)
+    while GPIO.input(echo)==0:
+        pulse_start = time.time()
+    while GPIO.input(echo)==1:
+        pulse_end = time.time()
+    pulse_duration = pulse_end - pulse_start
+    distance = pulse_duration * 17150
+    distance = round(distance, 2)
+    return distance
+
+# Cleanup GPIO pins
+def cleanup():
+    GPIO.cleanup()
+
+Note: This code assumes that the motor driver module is connected to GPIO pins 16, 18, 22, and 23, the ultrasonic sensor is connected to GPIO pins 13 and 15, and the servo motor is connected to GPIO pin 11. If your connections are different, you will need to modify the pin numbers in the code accordingly.
+
